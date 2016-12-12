@@ -2,6 +2,7 @@ package oauth2
 
 import (
 	"sync"
+	"time"
 
 	"github.com/ory-am/fosite"
 	"github.com/ory-am/hydra/client"
@@ -180,4 +181,20 @@ func (s *FositeMemoryStore) RevokeAccessToken(ctx context.Context, id string) er
 		return errors.New("Not found")
 	}
 	return nil
+}
+
+func (s *FositeMemoryStore) RemoveOldAccessTokens(lifespan time.Duration) (int64, error) {
+	//If lifespan = 0 or less, don't delete tokens.
+	if lifespan <= 0 {
+		return 0, nil
+	}
+	var count int64
+	for signature, req := range s.AccessTokens {
+		requestedAt := req.GetRequestedAt()
+		if time.Now().Sub(requestedAt) > lifespan {
+			delete(s.AccessTokens, signature)
+			count++
+		}
+	}
+	return count, nil
 }

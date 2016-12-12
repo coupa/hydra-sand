@@ -349,3 +349,8 @@ func (s *FositeRehinkDBStore) RevokeAccessToken(ctx context.Context, id string) 
 	}
 	return nil
 }
+
+func (s *FositeRehinkDBStore) RemoveOldAccessTokens(lifespan time.Duration) (int64, error) {
+	//Not supported
+	return 0, nil
+}
