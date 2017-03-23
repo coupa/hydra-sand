@@ -4,6 +4,11 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"math"
+	"net/url"
+	"strings"
+	"time"
+
 	"github.com/Sirupsen/logrus"
 	"github.com/jmoiron/sqlx"
 	"github.com/ory-am/fosite"
@@ -11,9 +16,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/rubenv/sql-migrate"
 	"golang.org/x/net/context"
-	"net/url"
-	"strings"
-	"time"
 )
 
 type FositeSQLStore struct {
@@ -279,4 +281,21 @@ func (s *FositeSQLStore) revokeSession(id string, table string) error {
 		return errors.WithStack(err)
 	}
 	return nil
+}
+
+func (s *FositeSQLStore) RemoveOldAccessTokens(lifespan time.Duration) (int64, error) {
+	//If lifespan = 0 or less, don't delete tokens.
+	if lifespan <= 0 {
+		return 0, nil
+	}
+	query := fmt.Sprintf(
+		`DELETE FROM hydra_oauth2_%s WHERE signature IN
+			(SELECT t.signature FROM
+				(SELECT signature, requested_at FROM hydra_oauth2_%s
+					WHERE TIMESTAMPDIFF(MINUTE, requested_at, UTC_TIMESTAMP()) > ?) t)`, sqlTableAccess, sqlTableAccess)
+	result, err := s.DB.Exec(s.DB.Rebind(query), int(math.Ceil(lifespan.Minutes())))
+	if err != nil {
+		return 0, errors.Wrap(err, "Error removing old tokens")
+	}
+	return result.RowsAffected()
 }

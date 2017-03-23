@@ -1,6 +1,8 @@
 package pkg
 
 import (
+	"time"
+
 	"github.com/ory-am/fosite"
 	"github.com/ory-am/fosite/handler/oauth2"
 	"github.com/ory-am/fosite/handler/openid"
@@ -23,4 +25,6 @@ type FositeStorer interface {
 	// is an access token, the server MAY revoke the respective refresh
 	// token as well.
 	RevokeAccessToken(ctx context.Context, requestID string) error
+
+	RemoveOldAccessTokens(lifespan time.Duration) (int64, error)
 }

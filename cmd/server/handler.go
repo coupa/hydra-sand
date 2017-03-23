@@ -59,6 +59,8 @@ func RunHost(c *config.Config) func(cmd *cobra.Command, args []string) {
 			pkg.Must(err, "Could not write configuration file: %s", err)
 		}
 
+		startCleanUpJob(c)
+
 		n := negroni.New()
 		useAirbrakeMiddleware(n)
 		useNewRelicMiddleware(n)
@@ -135,6 +137,19 @@ func useAirbrakeMiddleware(n *negroni.Negroni) {
 	airbrake = gobrake.NewNotifier(airbrakeProjectID, airbrakeProjectKey)
 	n.Use(&airbrakeMW{})
 	logrus.Info("Airbrake enabled!")
+}
+
+func startCleanUpJob(c *config.Config) {
+	go func(c *config.Config) {
+		logrus.Info("Access token clean up job running in the background")
+		for {
+			count, _ := c.Context().FositeStore.RemoveOldAccessTokens(c.GetAccessTokenLifespan())
+			if count > 0 {
+				logrus.Infoln("Deleted " + strconv.FormatInt(count, 10) + " access token(s)")
+			}
+			time.Sleep(c.GetAccessTokenLifespan())
+		}
+	}(c)
 }
 
 type airbrakeMW struct {
