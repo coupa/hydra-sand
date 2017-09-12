@@ -1,5 +1,5 @@
 FROM alpine:3.6
 RUN apk add --update ca-certificates
 ADD tmp/dist/sand /bin/sand
-ENTRYPOINT ["/bin/sand", "host"]
+ENTRYPOINT ["/bin/sand", "host", "--dangerous-force-http"]
 EXPOSE 4444
