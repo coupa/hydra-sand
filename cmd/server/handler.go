@@ -87,7 +87,10 @@ func RunHost(c *config.Config) func(cmd *cobra.Command, args []string) {
 		}
 
 		useAirbrakeMiddleware(n)
-		n.Use(negronilogrus.NewMiddlewareFromLogger(logger, c.Issuer))
+
+		logMiddleware := negronilogrus.NewMiddlewareFromLogger(logger, c.Issuer)
+		logMiddleware.ExcludeURL("/health")
+		n.Use(logMiddleware)
 		n.UseFunc(serverHandler.rejectInsecureRequests)
 		n.UseHandler(router)
 
