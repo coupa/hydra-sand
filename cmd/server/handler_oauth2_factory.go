@@ -101,7 +101,7 @@ func newOAuth2Provider(c *config.Config, km jwk.Manager) fosite.OAuth2Provider {
 	)
 }
 
-func newOAuth2Handler(c *config.Config, router *httprouter.Router, km jwk.Manager, o fosite.OAuth2Provider, statsd *statsd.Client) *oauth2.Handler {
+func newOAuth2Handler(c *config.Config, router *httprouter.Router, km jwk.Manager, o fosite.OAuth2Provider, statsdFactory func() *statsd.Client) *oauth2.Handler {
 	if c.ConsentURL == "" {
 		proto := "https"
 		if c.ForceHTTP {
@@ -132,7 +132,7 @@ func newOAuth2Handler(c *config.Config, router *httprouter.Router, km jwk.Manage
 		CookieStore:         sessions.NewCookieStore(c.GetCookieSecret()),
 		Issuer:              c.Issuer,
 		L:                   c.GetLogger(),
-		Statsd:              statsd,
+		StatsdFactory:       statsdFactory,
 	}
 
 	handler.SetRoutes(router)

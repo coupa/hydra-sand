@@ -50,8 +50,9 @@ type Handler struct {
 
 	L logrus.FieldLogger
 
-	Issuer string
-	Statsd *statsd.Client
+	Issuer        string
+	StatsdFactory func() *statsd.Client
+	Statsd        *statsd.Client
 }
 
 // swagger:model WellKnown
@@ -260,6 +261,9 @@ func (h *Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request, _ ht
 func (h *Handler) TokenHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	var session = NewSession("")
 	var ctx = fosite.NewContext()
+	if h.Statsd == nil {
+		h.Statsd = h.StatsdFactory()
+	}
 
 	// NOTE: if we can't get the accessRequest object below, then we don't know what the client_id is
 	sandClientId := ""

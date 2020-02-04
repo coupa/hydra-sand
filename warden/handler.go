@@ -41,20 +41,21 @@ var notAllowed = struct {
 
 // WardenHandler is capable of handling HTTP request and validating access tokens and access requests.
 type WardenHandler struct {
-	H            herodot.Writer
-	Warden       firewall.Firewall
-	Statsd       *statsd.Client
-	StatsdRegexp *regexp.Regexp
+	H             herodot.Writer
+	Warden        firewall.Firewall
+	StatsdFactory func() *statsd.Client
+	Statsd        *statsd.Client
+	StatsdRegexp  *regexp.Regexp
 }
 
-func NewHandler(c *config.Config, router *httprouter.Router, statsd *statsd.Client, regx *regexp.Regexp) *WardenHandler {
+func NewHandler(c *config.Config, router *httprouter.Router, statsdFactory func() *statsd.Client, regx *regexp.Regexp) *WardenHandler {
 	ctx := c.Context()
 
 	h := &WardenHandler{
-		H:            herodot.NewJSONWriter(c.GetLogger()),
-		Warden:       ctx.Warden,
-		Statsd:       statsd,
-		StatsdRegexp: regx,
+		H:             herodot.NewJSONWriter(c.GetLogger()),
+		Warden:        ctx.Warden,
+		StatsdFactory: statsdFactory,
+		StatsdRegexp:  regx,
 	}
 	h.SetRoutes(router)
 
@@ -168,6 +169,9 @@ func (h *WardenHandler) Allowed(w http.ResponseWriter, r *http.Request, _ httpro
 //       500: genericError
 func (h *WardenHandler) TokenAllowed(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	ctx := r.Context()
+	if h.Statsd == nil {
+		h.Statsd = h.StatsdFactory()
+	}
 
 	authContext, err := h.Warden.TokenAllowed(ctx, h.Warden.TokenFromRequest(r), &firewall.TokenAccessRequest{
 		Resource: "rn:hydra:warden:token:allowed",
