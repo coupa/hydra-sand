@@ -96,6 +96,7 @@ func RunServeAdmin(version, build, date string) func(cmd *cobra.Command, args []
 	return func(cmd *cobra.Command, args []string) {
 		logger := logrusx.New("", "")
 		watchAndValidateViper(logger)
+		x.InitStatsd(version)
 		d := driver.NewDefaultDriver(
 			logger,
 			flagx.MustGetBool(cmd, "dangerous-force-http"),
@@ -124,6 +125,7 @@ func RunServePublic(version, build, date string) func(cmd *cobra.Command, args [
 	return func(cmd *cobra.Command, args []string) {
 		logger := logrusx.New("", "")
 		watchAndValidateViper(logger)
+		x.InitStatsd(version)
 		d := driver.NewDefaultDriver(
 			logger,
 			flagx.MustGetBool(cmd, "dangerous-force-http"),
@@ -152,6 +154,7 @@ func RunServeAll(version, build, date string) func(cmd *cobra.Command, args []st
 	return func(cmd *cobra.Command, args []string) {
 		logger := logrusx.New("", "")
 		watchAndValidateViper(logger)
+		x.InitStatsd(version)
 		d := driver.NewDefaultDriver(
 			logger,
 			flagx.MustGetBool(cmd, "dangerous-force-http"),

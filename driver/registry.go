@@ -6,6 +6,7 @@ import (
 	"github.com/ory/x/logrusx"
 
 	"github.com/ory/hydra/persistence"
+	"github.com/ory/hydra/warden"
 
 	"github.com/ory/x/cmdx"
 	"github.com/ory/x/tracing"
@@ -20,6 +21,8 @@ import (
 	"github.com/ory/hydra/driver/configuration"
 	"github.com/ory/hydra/jwk"
 	"github.com/ory/hydra/oauth2"
+	"github.com/ory/hydra/policy"
+	"github.com/ory/hydra/warden/group"
 	"github.com/ory/hydra/x"
 )
 
@@ -44,6 +47,9 @@ type Registry interface {
 	consent.Registry
 	jwk.Registry
 	oauth2.Registry
+	warden.Registry
+	policy.Registry
+	group.Registry
 	PrometheusManager() *prometheus.MetricsManager
 	Tracer() *tracing.Tracer
 
@@ -100,4 +106,6 @@ func CallRegistry(r Registry) {
 	r.OpenIDConnectRequestValidator()
 	r.PrometheusManager()
 	r.Tracer()
+	r.PolicyManager()
+	r.Warden()
 }

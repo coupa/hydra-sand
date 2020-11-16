@@ -2,9 +2,14 @@ package driver
 
 import (
 	"github.com/ory/fosite"
+	"github.com/ory/hydra/firewall"
 	"github.com/ory/hydra/oauth2"
 	"github.com/ory/hydra/persistence/memory"
+	"github.com/ory/hydra/warden"
+	"github.com/ory/hydra/warden/group"
 	"github.com/ory/hydra/x"
+	"github.com/ory/ladon"
+	lmem "github.com/ory/ladon/manager/memory"
 
 	"github.com/ory/hydra/client"
 	"github.com/ory/hydra/consent"
@@ -41,6 +46,12 @@ func (m *RegistryMemory) WithOAuth2Provider(f fosite.OAuth2Provider) *RegistryMe
 // WithConsentStrategy forces a consent strategy which is only used for testing.
 func (m *RegistryMemory) WithConsentStrategy(c consent.Strategy) *RegistryMemory {
 	m.RegistryBase.cos = c
+	return m
+}
+
+// WithWarden forces a warden which is only used for testing.
+func (m *RegistryMemory) WithWarden(w firewall.Firewall) *RegistryMemory {
+	m.war = w
 	return m
 }
 
@@ -83,4 +94,32 @@ func (m *RegistryMemory) KeyManager() jwk.Manager {
 		m.km = jwk.NewMemoryManager()
 	}
 	return m.km
+}
+
+func (m *RegistryMemory) PolicyManager() ladon.Manager {
+	if m.pol == nil {
+		m.pol = lmem.NewMemoryManager()
+	}
+	return m.pol
+}
+
+func (m *RegistryMemory) GroupManager() group.Manager {
+	if m.gm == nil {
+		m.gm = group.NewMemoryManager()
+	}
+	return m.gm
+}
+
+func (m *RegistryMemory) Warden() firewall.Firewall {
+	if m.war == nil {
+		m.war = &warden.LocalWarden{
+			Warden: &ladon.Ladon{
+				Manager: m.PolicyManager(),
+			},
+			R:                   m.r,
+			Issuer:              m.C.IssuerURL().String(),
+			AccessTokenLifespan: m.C.AccessTokenLifespan(),
+		}
+	}
+	return m.war
 }

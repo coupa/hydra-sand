@@ -4,12 +4,17 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ory/ladon"
 	"github.com/ory/x/resilience"
 
 	"github.com/gobuffalo/pop/v5"
 	"github.com/pkg/errors"
 
+	"github.com/ory/hydra/firewall"
 	"github.com/ory/hydra/persistence/sql"
+	"github.com/ory/hydra/warden"
+	"github.com/ory/hydra/warden/group"
+	lsql "github.com/ory/ladon/manager/sql"
 
 	"github.com/jmoiron/sqlx"
 
@@ -139,4 +144,34 @@ func (m *RegistrySQL) KeyManager() jwk.Manager {
 		m.km = jwk.NewSQLManager(m.DB(), m)
 	}
 	return m.km
+}
+
+func (m *RegistrySQL) PolicyManager() ladon.Manager {
+	if m.pol == nil {
+		m.pol = lsql.NewSQLManager(m.DB(), nil)
+	}
+	return m.pol
+}
+
+func (m *RegistrySQL) GroupManager() group.Manager {
+	if m.gm == nil {
+		m.gm = &group.SQLManager{
+			DB: m.DB(),
+		}
+	}
+	return m.gm
+}
+
+func (m *RegistrySQL) Warden() firewall.Firewall {
+	if m.war == nil {
+		m.war = &warden.LocalWarden{
+			Warden: &ladon.Ladon{
+				Manager: m.PolicyManager(),
+			},
+			R:                   m.r,
+			Issuer:              m.C.IssuerURL().String(),
+			AccessTokenLifespan: m.C.AccessTokenLifespan(),
+		}
+	}
+	return m.war
 }
