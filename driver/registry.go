@@ -19,6 +19,7 @@ import (
 	"github.com/ory/hydra/client"
 	"github.com/ory/hydra/consent"
 	"github.com/ory/hydra/driver/configuration"
+	"github.com/ory/hydra/health"
 	"github.com/ory/hydra/jwk"
 	"github.com/ory/hydra/oauth2"
 	"github.com/ory/hydra/policy"
@@ -39,6 +40,8 @@ type Registry interface {
 	BuildDate() string
 	BuildHash() string
 
+	Ping() error
+
 	persistence.Provider
 	x.RegistryLogger
 	x.RegistryWriter
@@ -50,6 +53,7 @@ type Registry interface {
 	warden.Registry
 	policy.Registry
 	group.Registry
+	health.Registry
 	PrometheusManager() *prometheus.MetricsManager
 	Tracer() *tracing.Tracer
 

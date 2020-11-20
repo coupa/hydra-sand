@@ -57,6 +57,12 @@ func (m *RegistrySQL) WithDB(db *sqlx.DB) Registry {
 
 func (m *RegistrySQL) Init() error {
 	if m.db == nil {
+		if dbCert := m.C.DBSSLCert(); dbCert != "" {
+			if err := x.RegisterMysqlTLS(dbCert); err != nil {
+				m.Logger().WithError(err).Fatal("Error registering MySQL cert")
+			}
+			m.Logger().Info("MySQL SSL cert registered")
+		}
 		// old db connection
 		options := append([]sqlcon.OptionModifier{}, m.dbalOptions...)
 		if m.Tracer().IsLoaded() {

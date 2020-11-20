@@ -34,10 +34,12 @@ import (
 	"github.com/ory/hydra/driver"
 	"github.com/ory/hydra/internal"
 	. "github.com/ory/hydra/oauth2"
+	"github.com/ory/hydra/x"
 	"github.com/ory/x/sqlcon/dockertest"
 )
 
 func TestMain(m *testing.M) {
+	x.InitStatsd("")
 	flag.Parse()
 
 	runner := dockertest.Register()

@@ -27,13 +27,10 @@ import (
 	"net/http"
 	"strings"
 	"sync"
-	"time"
 
 	"github.com/gobuffalo/packr/v2"
 
 	"github.com/ory/x/viperx"
-
-	analytics "github.com/ory/analytics-go/v4"
 
 	"github.com/ory/x/flagx"
 	"github.com/ory/x/logrusx"
@@ -47,15 +44,10 @@ import (
 
 	"github.com/ory/graceful"
 	"github.com/ory/x/healthx"
-	"github.com/ory/x/metricsx"
 
-	"github.com/ory/hydra/client"
 	"github.com/ory/hydra/consent"
 	"github.com/ory/hydra/driver"
 	"github.com/ory/hydra/driver/configuration"
-	"github.com/ory/hydra/jwk"
-	"github.com/ory/hydra/metrics/prometheus"
-	"github.com/ory/hydra/oauth2"
 	"github.com/ory/hydra/x"
 )
 
@@ -212,7 +204,8 @@ func setup(d driver.Driver, cmd *cobra.Command) (admin *x.RouterAdmin, public *x
 	}
 
 	adminmw.Use(adminLogger)
-	adminmw.Use(d.Registry().PrometheusManager())
+	//Disable prometheus since we use statsd
+	// adminmw.Use(d.Registry().PrometheusManager())
 
 	publicLogger := reqlog.NewMiddlewareFromLogger(
 		d.Registry().Logger(),
@@ -225,73 +218,74 @@ func setup(d driver.Driver, cmd *cobra.Command) (admin *x.RouterAdmin, public *x
 	publicmw.Use(publicLogger)
 	publicmw.Use(d.Registry().PrometheusManager())
 
-	metrics := metricsx.New(
-		cmd,
-		d.Registry().Logger(),
-		&metricsx.Options{
-			Service: "ory-hydra",
-			ClusterID: metricsx.Hash(fmt.Sprintf("%s|%s",
-				d.Configuration().IssuerURL().String(),
-				d.Configuration().DSN(),
-			)),
-			IsDevelopment: d.Configuration().DSN() == "memory" ||
-				d.Configuration().IssuerURL().String() == "" ||
-				strings.Contains(d.Configuration().IssuerURL().String(), "localhost"),
-			WriteKey: "h8dRH3kVCWKkIFWydBmWsyYHR4M0u0vr",
-			WhitelistedPaths: []string{
-				jwk.KeyHandlerPath,
-				jwk.WellKnownKeysPath,
-
-				client.ClientsHandlerPath,
-
-				oauth2.DefaultConsentPath,
-				oauth2.DefaultLoginPath,
-				oauth2.DefaultPostLogoutPath,
-				oauth2.DefaultLogoutPath,
-				oauth2.DefaultErrorPath,
-				oauth2.TokenPath,
-				oauth2.AuthPath,
-				oauth2.LogoutPath,
-				oauth2.UserinfoPath,
-				oauth2.WellKnownPath,
-				oauth2.JWKPath,
-				oauth2.IntrospectPath,
-				oauth2.RevocationPath,
-				oauth2.FlushPath,
-
-				consent.ConsentPath,
-				consent.ConsentPath + "/accept",
-				consent.ConsentPath + "/reject",
-				consent.LoginPath,
-				consent.LoginPath + "/accept",
-				consent.LoginPath + "/reject",
-				consent.LogoutPath,
-				consent.LogoutPath + "/accept",
-				consent.LogoutPath + "/reject",
-				consent.SessionsPath + "/login",
-				consent.SessionsPath + "/consent",
-
-				healthx.AliveCheckPath,
-				healthx.ReadyCheckPath,
-				healthx.VersionPath,
-				prometheus.MetricsPrometheusPath,
-				"/",
-			},
-			BuildVersion: d.Registry().BuildVersion(),
-			BuildTime:    d.Registry().BuildDate(),
-			BuildHash:    d.Registry().BuildHash(),
-			Config: &analytics.Config{
-				Endpoint:             "https://sqa.ory.sh",
-				GzipCompressionLevel: 6,
-				BatchMaxSize:         500 * 1000,
-				BatchSize:            250,
-				Interval:             time.Hour * 24,
-			},
-		},
-	)
-
-	adminmw.Use(metrics)
-	publicmw.Use(metrics)
+	//Disable prometheus since we use statsd
+	// metrics := metricsx.New(
+	// 	cmd,
+	// 	d.Registry().Logger(),
+	// 	&metricsx.Options{
+	// 		Service: "ory-hydra",
+	// 		ClusterID: metricsx.Hash(fmt.Sprintf("%s|%s",
+	// 			d.Configuration().IssuerURL().String(),
+	// 			d.Configuration().DSN(),
+	// 		)),
+	// 		IsDevelopment: d.Configuration().DSN() == "memory" ||
+	// 			d.Configuration().IssuerURL().String() == "" ||
+	// 			strings.Contains(d.Configuration().IssuerURL().String(), "localhost"),
+	// 		WriteKey: "h8dRH3kVCWKkIFWydBmWsyYHR4M0u0vr",
+	// 		WhitelistedPaths: []string{
+	// 			jwk.KeyHandlerPath,
+	// 			jwk.WellKnownKeysPath,
+	//
+	// 			client.ClientsHandlerPath,
+	//
+	// 			oauth2.DefaultConsentPath,
+	// 			oauth2.DefaultLoginPath,
+	// 			oauth2.DefaultPostLogoutPath,
+	// 			oauth2.DefaultLogoutPath,
+	// 			oauth2.DefaultErrorPath,
+	// 			oauth2.TokenPath,
+	// 			oauth2.AuthPath,
+	// 			oauth2.LogoutPath,
+	// 			oauth2.UserinfoPath,
+	// 			oauth2.WellKnownPath,
+	// 			oauth2.JWKPath,
+	// 			oauth2.IntrospectPath,
+	// 			oauth2.RevocationPath,
+	// 			oauth2.FlushPath,
+	//
+	// 			consent.ConsentPath,
+	// 			consent.ConsentPath + "/accept",
+	// 			consent.ConsentPath + "/reject",
+	// 			consent.LoginPath,
+	// 			consent.LoginPath + "/accept",
+	// 			consent.LoginPath + "/reject",
+	// 			consent.LogoutPath,
+	// 			consent.LogoutPath + "/accept",
+	// 			consent.LogoutPath + "/reject",
+	// 			consent.SessionsPath + "/login",
+	// 			consent.SessionsPath + "/consent",
+	//
+	// 			healthx.AliveCheckPath,
+	// 			healthx.ReadyCheckPath,
+	// 			healthx.VersionPath,
+	// 			prometheus.MetricsPrometheusPath,
+	// 			"/",
+	// 		},
+	// 		BuildVersion: d.Registry().BuildVersion(),
+	// 		BuildTime:    d.Registry().BuildDate(),
+	// 		BuildHash:    d.Registry().BuildHash(),
+	// 		Config: &analytics.Config{
+	// 			Endpoint:             "https://sqa.ory.sh",
+	// 			GzipCompressionLevel: 6,
+	// 			BatchMaxSize:         500 * 1000,
+	// 			BatchSize:            250,
+	// 			Interval:             time.Hour * 24,
+	// 		},
+	// 	},
+	// )
+	//
+	// adminmw.Use(metrics)
+	// publicmw.Use(metrics)
 
 	d.Registry().RegisterRoutes(admin, public)
 

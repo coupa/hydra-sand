@@ -30,6 +30,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coupa/foundation-go/metrics"
 	jwt2 "github.com/dgrijalva/jwt-go"
 	"github.com/julienschmidt/httprouter"
 	"github.com/pkg/errors"
@@ -551,11 +552,24 @@ func (h *Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	var session = NewSession("")
 	var ctx = r.Context()
 
+	// NOTE: if we can't get the accessRequest object below, then we don't know what the client_id is
+	var sandClientID, scopes string
+	if originalID, _, ok := r.BasicAuth(); ok {
+		sandClientID, _ = url.QueryUnescape(originalID)
+	}
+
 	accessRequest, err := h.r.OAuth2Provider().NewAccessRequest(ctx, r, session)
+
+	requestedScopes := accessRequest.GetRequestedScopes()
+	if len(requestedScopes) > 0 {
+		scopes = strings.Join(requestedScopes, " ")
+	}
+	statsdTags := map[string]string{"client_id": sandClientID, "scopes": scopes}
 
 	if err != nil {
 		h.logOrAudit(err, r)
 		h.r.OAuth2Provider().WriteAccessError(w, accessRequest, err)
+		metrics.Increment("Token.Auth.Failure", statsdTags)
 		return
 	}
 
@@ -576,7 +590,7 @@ func (h *Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 		session.DefaultSession.Claims.Issuer = strings.TrimRight(h.c.IssuerURL().String(), "/") + "/"
 		session.DefaultSession.Claims.IssuedAt = time.Now().UTC()
 
-		for _, scope := range accessRequest.GetRequestedScopes() {
+		for _, scope := range requestedScopes {
 			if h.r.ScopeStrategy()(accessRequest.GetClient().GetScopes(), scope) {
 				accessRequest.GrantScope(scope)
 			}
@@ -594,10 +608,12 @@ func (h *Handler) TokenHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.logOrAudit(err, r)
 		h.r.OAuth2Provider().WriteAccessError(w, accessRequest, err)
+		metrics.Increment("Token.Provision.Failure", statsdTags)
 		return
 	}
 
 	h.r.OAuth2Provider().WriteAccessResponse(w, accessRequest, accessResponse)
+	metrics.Increment("Token.Provision.Success", statsdTags)
 }
 
 func (h *Handler) logOrAudit(err error, r *http.Request) {

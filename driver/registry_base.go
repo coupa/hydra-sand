@@ -35,6 +35,7 @@ import (
 	"github.com/ory/hydra/consent"
 	"github.com/ory/hydra/driver/configuration"
 	"github.com/ory/hydra/firewall"
+	"github.com/ory/hydra/health"
 	"github.com/ory/hydra/jwk"
 	"github.com/ory/hydra/oauth2"
 	"github.com/ory/hydra/x"
@@ -50,6 +51,7 @@ type RegistryBase struct {
 	kh           *jwk.Handler
 	cv           *client.Validator
 	hh           *healthx.Handler
+	hh2          *health.Handler
 	kg           map[string]jwk.KeyGenerator
 	km           jwk.Manager
 	kc           *jwk.AEAD
@@ -86,6 +88,10 @@ type RegistryBase struct {
 	persister    persistence.Persister
 }
 
+func (m *RegistryBase) Config() configuration.Provider {
+	return m.C
+}
+
 func (m *RegistryBase) with(r Registry) *RegistryBase {
 	m.r = r
 	return m
@@ -107,6 +113,7 @@ func (m *RegistryBase) OAuth2AwareMiddleware() func(h http.Handler) http.Handler
 
 func (m *RegistryBase) RegisterRoutes(admin *x.RouterAdmin, public *x.RouterPublic) {
 	m.HealthHandler().SetRoutes(admin.Router, true)
+	m.HealthHandler2().SetRoutes(public)
 
 	public.GET(healthx.AliveCheckPath, m.HealthHandler().Alive)
 	public.GET(healthx.ReadyCheckPath, m.HealthHandler().Ready(false))
@@ -206,6 +213,14 @@ func (m *RegistryBase) HealthHandler() *healthx.Handler {
 	}
 
 	return m.hh
+}
+
+func (m *RegistryBase) HealthHandler2() *health.Handler {
+	if m.hh2 == nil {
+		m.hh2 = health.NewHandler(m.r, m.C)
+	}
+
+	return m.hh2
 }
 
 func (m *RegistryBase) ConsentStrategy() consent.Strategy {
