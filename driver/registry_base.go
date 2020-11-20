@@ -7,6 +7,10 @@ import (
 	"time"
 
 	"github.com/ory/hydra/persistence"
+	"github.com/ory/hydra/policy"
+	"github.com/ory/hydra/warden"
+	"github.com/ory/hydra/warden/group"
+	"github.com/ory/ladon"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
@@ -30,6 +34,7 @@ import (
 	"github.com/ory/hydra/client"
 	"github.com/ory/hydra/consent"
 	"github.com/ory/hydra/driver/configuration"
+	"github.com/ory/hydra/firewall"
 	"github.com/ory/hydra/jwk"
 	"github.com/ory/hydra/oauth2"
 	"github.com/ory/hydra/x"
@@ -63,6 +68,12 @@ type RegistryBase struct {
 	fop          fosite.OAuth2Provider
 	coh          *consent.Handler
 	oah          *oauth2.Handler
+	wh           *warden.Handler
+	ph           *policy.Handler
+	gh           *group.Handler
+	war          firewall.Firewall
+	pol          ladon.Manager
+	gm           group.Manager
 	sia          map[string]consent.SubjectIdentifierAlgorithm
 	trc          *tracing.Tracer
 	pmm          *prometheus.MetricsManager
@@ -106,6 +117,9 @@ func (m *RegistryBase) RegisterRoutes(admin *x.RouterAdmin, public *x.RouterPubl
 	m.KeyHandler().SetRoutes(admin, public, m.OAuth2AwareMiddleware())
 	m.ClientHandler().SetRoutes(admin)
 	m.OAuth2Handler().SetRoutes(admin, public, m.OAuth2AwareMiddleware())
+	m.WardenHandler().SetRoutes(admin)
+	m.GroupHandler().SetRoutes(admin)
+	m.PolicyHandler().SetRoutes(admin)
 }
 
 func (m *RegistryBase) BuildVersion() string {
@@ -380,6 +394,27 @@ func (m *RegistryBase) OAuth2Handler() *oauth2.Handler {
 		m.oah = oauth2.NewHandler(m.r, m.C)
 	}
 	return m.oah
+}
+
+func (m *RegistryBase) WardenHandler() *warden.Handler {
+	if m.wh == nil {
+		m.wh = warden.NewHandler(m.r, m.C)
+	}
+	return m.wh
+}
+
+func (m *RegistryBase) PolicyHandler() *policy.Handler {
+	if m.ph == nil {
+		m.ph = policy.NewHandler(m.r, m.C)
+	}
+	return m.ph
+}
+
+func (m *RegistryBase) GroupHandler() *group.Handler {
+	if m.gh == nil {
+		m.gh = group.NewHandler(m.r, m.C)
+	}
+	return m.gh
 }
 
 func (m *RegistryBase) SubjectIdentifierAlgorithm() map[string]consent.SubjectIdentifierAlgorithm {
