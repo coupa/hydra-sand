@@ -3,6 +3,24 @@ SHELL=/bin/bash -o pipefail
 export GO111MODULE := on
 export PATH := .bin:${PATH}
 
+SRCROOT ?= $(realpath .)
+
+# These are paths used in the docker image
+SRCROOT_D = /go/src/github.com/ory/hydra
+
+BUILD_NUMBER ?= x
+BUILD_IDENTIFIER = _${BUILD_NUMBER}
+
+MAJOR_VERSION = 2
+MINOR_VERSION = 0
+PATCH_VERSION = $(BUILD_NUMBER)
+
+REVISION ?= $$(git rev-parse --short HEAD)
+VERSION ?= $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION)
+CGO_ENABLED ?= 0
+
+LD_FLAGS ?= -ldflags "-X github.com/ory/hydra/cmd.Commit=$(REVISION) -X github.com/ory/hydra/cmd.Version=$(VERSION)"
+
 GO_DEPENDENCIES = github.com/ory/go-acc \
 				  github.com/sqs/goreturns \
 				  github.com/ory/x/tools/listx \
@@ -148,3 +166,30 @@ install: .bin/packr2
 		packr2
 		GO111MODULE=on go install .
 		packr2 clean
+
+.PHONY: clean
+clean:
+		rm -f hydra
+		rm -rf tmp/dist
+
+.PHONY: build
+build:
+		which packr2; if [ $$? -eq 1 ]; then \
+				go get -u github.com/gobuffalo/packr/v2/packr2; \
+		fi
+		packr2 clean
+		packr2
+	 	GO111MODULE=on CGO_ENABLED=${CGO_ENABLED} go build $(LD_FLAGS)
+
+.PHONY: docker.build
+docker.build: clean
+		docker build -f Dockerfile-builder \
+			-t hydra${BUILD_IDENTIFIER} \
+			--build-arg version=${VERSION} \
+			--build-arg revision=${REVISION} \
+			--build-arg builder_image=${BUILDER_IMAGE} .
+		docker create -it --name tocopy-hydra${BUILD_IDENTIFIER} hydra${BUILD_IDENTIFIER} bash
+		mkdir -p ${SRCROOT}/tmp/dist/
+		docker cp tocopy-hydra${BUILD_IDENTIFIER}:${SRCROOT_D}/hydra ${SRCROOT}/tmp/dist/
+		docker rm -f tocopy-hydra${BUILD_IDENTIFIER}
+		docker rmi -f hydra${BUILD_IDENTIFIER}
