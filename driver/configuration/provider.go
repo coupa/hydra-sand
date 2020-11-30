@@ -69,6 +69,8 @@ type Provider interface {
 	EnforcePKCEForPublicClients() bool
 
 	CGroupsV1AutoMaxProcsEnabled() bool
+
+	DBSSLCert() string
 }
 
 func MustValidate(l *logrusx.Logger, p Provider) {

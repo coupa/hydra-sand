@@ -44,6 +44,7 @@ const (
 	ViperKeySubjectTypesSupported          = "oidc.subject_identifiers.supported_types"
 	ViperKeyDefaultClientScope             = "oidc.dynamic_client_registration.default_scope"
 	ViperKeyDSN                            = "dsn"
+	ViperKeyDBSSLCert                      = "db.ssl.cert"
 	ViperKeyBCryptCost                     = "oauth2.hashers.bcrypt.cost"
 	ViperKeyEncryptSessionData             = "oauth2.session.encrypt_at_rest"
 	ViperKeyAdminListenOnHost              = "serve.admin.host"
@@ -98,6 +99,10 @@ func NewViperProvider(l *logrusx.Logger, forcedHTTP bool, insecureRedirects []st
 		forcedHTTP:        forcedHTTP,
 		insecureRedirects: insecureRedirects,
 	}
+}
+
+func (v *ViperProvider) DBSSLCert() string {
+	return viper.GetString(ViperKeyDBSSLCert)
 }
 
 func (v *ViperProvider) getAddress(address string, port int) string {
