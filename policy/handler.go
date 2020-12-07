@@ -67,6 +67,24 @@ func (h *Handler) SetRoutes(admin *x.RouterAdmin) {
 //       403: genericError
 //       500: genericError
 func (h *Handler) List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	subject := r.URL.Query().Get("subject")
+	resource := r.URL.Query().Get("resource")
+
+	if subject != "" && resource != "" {
+		h.r.Writer().WriteErrorCode(w, r, http.StatusBadRequest, errors.New("cannot query with both subject and resource. Only one of them can be supplied"))
+		return
+	}
+
+	policies, err := h.findPolicies(subject, resource)
+	if err != nil {
+		h.r.Writer().WriteError(w, r, errors.WithStack(err))
+		return
+	}
+	if policies != nil {
+		h.r.Writer().Write(w, r, policies)
+		return
+	}
+
 	val := r.URL.Query().Get("offset")
 	if val == "" {
 		val = "0"
@@ -89,7 +107,7 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 		return
 	}
 
-	policies, err := h.r.PolicyManager().GetAll(limit, offset)
+	policies, err = h.r.PolicyManager().GetAll(limit, offset)
 	if err != nil {
 		h.r.Writer().WriteError(w, r, errors.WithStack(err))
 		return
@@ -286,4 +304,13 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request, ps httprouter.P
 	}
 
 	h.r.Writer().Write(w, r, p)
+}
+
+func (h *Handler) findPolicies(subject, resource string) (ladon.Policies, error) {
+	if subject != "" {
+		return h.r.PolicyManager().FindRequestCandidates(&ladon.Request{Subject: subject})
+	} else if resource != "" {
+		return h.r.PolicyManager().FindPoliciesForResource(&ladon.Request{Resource: resource})
+	}
+	return nil, nil
 }
