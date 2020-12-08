@@ -114,3 +114,5 @@ require (
 	gopkg.in/square/go-jose.v2 v2.5.1
 	sourcegraph.com/sourcegraph/go-diff v0.5.0 // indirect
 )
+
+replace github.com/ory/ladon => github.com/coupa/ladon v0.8.10
