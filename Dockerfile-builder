@@ -1,15 +1,16 @@
-ARG builder_image
+ARG BUILDER_IMAGE
 
-FROM ${builder_image}
+FROM ${BUILDER_IMAGE}
 
 RUN sudo apk add git bash build-base && \
     go get -u github.com/gobuffalo/packr/v2/packr2
 
 COPY --chown=app . /go/src/github.com/ory/hydra
 
-ARG version=unknown
-ARG revision=unknown
+ARG VERSION=unknown
+ARG REVISION=unknown
+ARG CGO_ENABLED=1
 
 WORKDIR /go/src/github.com/ory/hydra
 
-RUN VERSION=${version} REVISION=${revision} CGO_ENABLED=1 make build
+RUN VERSION=${VERSION} REVISION=${REVISION} CGO_ENABLED=${CGO_ENABLED} make build

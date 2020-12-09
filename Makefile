@@ -13,7 +13,7 @@ BUILD_IDENTIFIER = _${BUILD_NUMBER}
 
 MAJOR_VERSION = 2
 MINOR_VERSION = 0
-PATCH_VERSION = $(BUILD_NUMBER)
+PATCH_VERSION = 0
 
 REVISION ?= $$(git rev-parse --short HEAD)
 VERSION ?= $(MAJOR_VERSION).$(MINOR_VERSION).$(PATCH_VERSION)
@@ -169,7 +169,7 @@ install: .bin/packr2
 
 .PHONY: clean
 clean:
-		rm -f hydra
+		rm -f hydra hydra_version.txt
 		rm -rf tmp/dist
 
 .PHONY: build
@@ -179,17 +179,21 @@ build:
 		fi
 		packr2 clean
 		packr2
-	 	GO111MODULE=on CGO_ENABLED=${CGO_ENABLED} go build $(LD_FLAGS)
+	 	GO111MODULE=on CGO_ENABLED=$(CGO_ENABLED) go build $(LD_FLAGS)
 
 .PHONY: docker.build
 docker.build: clean
 		docker build -f Dockerfile-builder \
-			-t hydra${BUILD_IDENTIFIER} \
-			--build-arg version=${VERSION} \
-			--build-arg revision=${REVISION} \
-			--build-arg builder_image=${BUILDER_IMAGE} .
-		docker create -it --name tocopy-hydra${BUILD_IDENTIFIER} hydra${BUILD_IDENTIFIER} bash
-		mkdir -p ${SRCROOT}/tmp/dist/
-		docker cp tocopy-hydra${BUILD_IDENTIFIER}:${SRCROOT_D}/hydra ${SRCROOT}/tmp/dist/
-		docker rm -f tocopy-hydra${BUILD_IDENTIFIER}
-		docker rmi -f hydra${BUILD_IDENTIFIER}
+				-t hydra$(BUILD_IDENTIFIER) \
+				--build-arg VERSION=$(VERSION) \
+				--build-arg REVISION=$(REVISION) \
+				--build-arg CGO_ENABLED=$(CGO_ENABLED) \
+				--build-arg BUILDER_IMAGE=$(BUILDER_IMAGE) .
+		docker create -it --name tocopy-hydra$(BUILD_IDENTIFIER) hydra$(BUILD_IDENTIFIER) bash
+		docker cp tocopy-hydra$(BUILD_IDENTIFIER):$(SRCROOT_D)/hydra $(SRCROOT)/
+		docker rm -f tocopy-hydra$(BUILD_IDENTIFIER)
+		docker rmi -f hydra$(BUILD_IDENTIFIER)
+
+.PHONY: version
+version:
+		echo $(VERSION)-$(REVISION) > hydra_version.txt
