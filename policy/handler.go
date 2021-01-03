@@ -308,7 +308,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request, ps httprouter.P
 
 func (h *Handler) findPolicies(subject, resource string) (ladon.Policies, error) {
 	if subject != "" {
-		return h.r.PolicyManager().FindRequestCandidates(&ladon.Request{Subject: subject})
+		return h.r.PolicyManager().FindPoliciesForSubject(&ladon.Request{Subject: subject})
 	} else if resource != "" {
 		return h.r.PolicyManager().FindPoliciesForResource(&ladon.Request{Resource: resource})
 	}

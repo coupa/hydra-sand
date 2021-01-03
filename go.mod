@@ -115,4 +115,4 @@ require (
 	sourcegraph.com/sourcegraph/go-diff v0.5.0 // indirect
 )
 
-replace github.com/ory/ladon => github.com/coupa/ladon v0.8.10
+replace github.com/ory/ladon => github.com/coupa/ladon v0.8.11
