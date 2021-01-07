@@ -194,6 +194,19 @@ docker.build: clean
 		docker rm -f tocopy-hydra$(BUILD_IDENTIFIER)
 		docker rmi -f hydra$(BUILD_IDENTIFIER)
 
+.PHONY: docker.build.nonfips
+docker.build.nonfips: clean
+		docker build -f Dockerfile-builder-nonfips \
+				-t hydra$(BUILD_IDENTIFIER) \
+				--build-arg VERSION=$(VERSION) \
+				--build-arg REVISION=$(REVISION) \
+				--build-arg CGO_ENABLED=$(CGO_ENABLED) \
+				--build-arg BUILDER_IMAGE=$(BUILDER_IMAGE) .
+		docker create -it --name tocopy-hydra$(BUILD_IDENTIFIER) hydra$(BUILD_IDENTIFIER) bash
+		docker cp tocopy-hydra$(BUILD_IDENTIFIER):$(SRCROOT_D)/hydra $(SRCROOT)/
+		docker rm -f tocopy-hydra$(BUILD_IDENTIFIER)
+		docker rmi -f hydra$(BUILD_IDENTIFIER)
+
 .PHONY: version
 version:
 		echo $(VERSION)-$(REVISION) > hydra_version.txt
