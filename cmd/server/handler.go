@@ -200,7 +200,7 @@ func setup(d driver.Driver, cmd *cobra.Command) (admin *x.RouterAdmin, public *x
 		NewMiddlewareFromLogger(d.Registry().Logger(),
 			fmt.Sprintf("hydra/admin: %s", d.Configuration().IssuerURL().String()))
 	if d.Configuration().AdminDisableHealthAccessLog() {
-		adminLogger = adminLogger.ExcludePaths(healthx.AliveCheckPath, healthx.ReadyCheckPath)
+		adminLogger = adminLogger.ExcludePaths(healthx.AliveCheckPath, healthx.ReadyCheckPath, "/health")
 	}
 
 	adminmw.Use(adminLogger)
@@ -212,7 +212,7 @@ func setup(d driver.Driver, cmd *cobra.Command) (admin *x.RouterAdmin, public *x
 		fmt.Sprintf("hydra/public: %s", d.Configuration().IssuerURL().String()),
 	)
 	if d.Configuration().PublicDisableHealthAccessLog() {
-		publicLogger.ExcludePaths(healthx.AliveCheckPath, healthx.ReadyCheckPath)
+		publicLogger.ExcludePaths(healthx.AliveCheckPath, healthx.ReadyCheckPath, "/health")
 	}
 
 	publicmw.Use(publicLogger)
