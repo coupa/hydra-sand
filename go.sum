@@ -139,8 +139,8 @@ github.com/coreos/go-systemd v0.0.0-20181012123002-c6f51f82210d/go.mod h1:F5haX7
 github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/go-systemd v0.0.0-20190719114852-fd7a80b32e1f/go.mod h1:F5haX7vjVVG0kc13fIWeqUViNPyEJxv/OmvnBo0Yme4=
 github.com/coreos/pkg v0.0.0-20180928190104-399ea9e2e55f/go.mod h1:E3G3o1h8I7cfcXa63jLwjI0eiQQMgzzUDFVpN/nH/eA=
-github.com/coupa/fosite v0.34.1-0 h1:bs/WtNWnFkHTa+hGlli5C1Y8xD61VZKR02fBT0tPIfI=
-github.com/coupa/fosite v0.34.1-0/go.mod h1:ikVSbOhfSLX0sdz/RmtiOMi4xELJ6iconOb2R/Wrobc=
+github.com/coupa/fosite v0.34.1-1 h1:0j95mfvgWpFtM/M8aYwQ4OlWovsmTtRbgQufcgmowGA=
+github.com/coupa/fosite v0.34.1-1/go.mod h1:ikVSbOhfSLX0sdz/RmtiOMi4xELJ6iconOb2R/Wrobc=
 github.com/coupa/foundation-go v1.2.2 h1:SU3U+TK68cl2gTXq1R4199doHRgfSTa9d+nafk8tRgE=
 github.com/coupa/foundation-go v1.2.2/go.mod h1:NwvE1/E1lLLDh/yImBcS3Vdobpw/ForlbVQ7txUquPg=
 github.com/coupa/ladon v0.8.10 h1:epelQStrvVxwdCBK7IcXUiJcP6tJ1NXkrNbhVU1ujUQ=

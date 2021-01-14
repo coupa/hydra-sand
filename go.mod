@@ -116,4 +116,4 @@ require (
 )
 
 replace github.com/ory/ladon => github.com/coupa/ladon v0.8.11
-replace github.com/ory/fosite => github.com/coupa/fosite v0.34.1-0
+replace github.com/ory/fosite => github.com/coupa/fosite v0.34.1-1
