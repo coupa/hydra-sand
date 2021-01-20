@@ -30,7 +30,7 @@ func RegisterMysqlTLS(certs string) error {
 	if ok := rootCertPool.AppendCertsFromPEM(pem); !ok {
 		return errors.New("MySQL failed to append PEM")
 	}
-	return mysql.RegisterTLSConfig("custom", &tls.Config{RootCAs: rootCertPool})
+	return mysql.RegisterTLSConfig("custom", &tls.Config{RootCAs: rootCertPool, MinVersion: tls.VersionTLS12})
 }
 
 func cleanURLQuery(c *url.URL) *url.URL {
