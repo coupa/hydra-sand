@@ -432,6 +432,9 @@ func (h *Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request, _ ht
 		x.LogAudit(r, err, h.r.Logger())
 		err := errors.WithStack(fosite.ErrInactiveToken.WithHint("An introspection strategy indicated that the token is inactive.").WithDebug(err.Error()))
 		h.r.OAuth2Provider().WriteIntrospectionError(w, err)
+
+		statsdTags := map[string]string{"scopes": scope}
+		metrics.Increment("Token.Introspect.Invalid", statsdTags)
 		return
 	}
 
@@ -463,14 +466,20 @@ func (h *Handler) IntrospectHandler(w http.ResponseWriter, r *http.Request, _ ht
 		obfuscated = session.Claims.Subject
 	}
 
+	clientID := resp.GetAccessRequester().GetClient().GetID()
+	scopes := strings.Join(resp.GetAccessRequester().GetGrantedScopes(), " ")
+	subject := session.GetSubject()
+	statsdTags := map[string]string{"client_id": clientID, "scopes": scopes, "subject": subject}
+	metrics.Increment("Token.Introspect", statsdTags)
+
 	w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 	if err = json.NewEncoder(w).Encode(&Introspection{
 		Active:            resp.IsActive(),
-		ClientID:          resp.GetAccessRequester().GetClient().GetID(),
-		Scope:             strings.Join(resp.GetAccessRequester().GetGrantedScopes(), " "),
+		ClientID:          clientID,
+		Scope:             scopes,
 		ExpiresAt:         exp.Unix(),
 		IssuedAt:          resp.GetAccessRequester().GetRequestedAt().Unix(),
-		Subject:           session.GetSubject(),
+		Subject:           subject,
 		Username:          session.GetUsername(),
 		Extra:             session.Extra,
 		Audience:          resp.GetAccessRequester().GetGrantedAudience(),
