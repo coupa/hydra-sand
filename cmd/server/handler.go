@@ -28,6 +28,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/coupa/foundation-go/metrics"
 	"github.com/gobuffalo/packr/v2"
 
 	"github.com/ory/x/viperx"
@@ -204,6 +205,7 @@ func setup(d driver.Driver, cmd *cobra.Command) (admin *x.RouterAdmin, public *x
 	}
 
 	adminmw.Use(adminLogger)
+	adminmw.Use(negroni.HandlerFunc(StatsdMiddleware))
 	//Disable prometheus since we use statsd
 	// adminmw.Use(d.Registry().PrometheusManager())
 
@@ -216,7 +218,9 @@ func setup(d driver.Driver, cmd *cobra.Command) (admin *x.RouterAdmin, public *x
 	}
 
 	publicmw.Use(publicLogger)
-	publicmw.Use(d.Registry().PrometheusManager())
+	publicmw.Use(negroni.HandlerFunc(StatsdMiddleware))
+	//Disable prometheus since we use statsd
+	// publicmw.Use(d.Registry().PrometheusManager())
 
 	//Disable prometheus since we use statsd
 	// metrics := metricsx.New(
@@ -338,4 +342,15 @@ func serve(d driver.Driver, cmd *cobra.Command, wg *sync.WaitGroup, handler http
 	}, srv.Shutdown); err != nil {
 		d.Registry().Logger().WithError(err).Fatal("Could not gracefully run server")
 	}
+}
+
+func StatsdMiddleware(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	var timing *metrics.StatsdTiming
+
+	tags := map[string]string{"path": r.URL.Path}
+	timing = metrics.NewTiming("requests", tags)
+
+	next(rw, r)
+
+	timing.Send()
 }

@@ -431,13 +431,27 @@ func (v *ViperProvider) PublicURL() *url.URL {
 	return urlRoot(urlx.ParseOrFatal(v.l, viperx.GetString(v.l, ViperKeyPublicURL, v.publicFallbackURL("/"))))
 }
 
-var issuerURL *url.URL
-
 func (v *ViperProvider) IssuerURL() *url.URL {
-	if issuerURL == nil {
-		issuerURL = urlRoot(urlx.ParseOrFatal(v.l, strings.TrimRight(viperx.GetString(v.l, ViperKeyIssuerURL, v.fallbackURL("/", v.publicHost(), v.publicPort()), "OAUTH2_ISSUER_URL", "ISSUER", "ISSUER_URL"), "/")+"/"))
+	return urlRoot(urlx.ParseOrFatal(v.l, strings.TrimRight(getString(v.l, ViperKeyIssuerURL, v.fallbackURL("/", v.publicHost(), v.publicPort()), "OAUTH2_ISSUER_URL", "ISSUER", "ISSUER_URL"), "/")+"/"))
+}
+
+//The original viperx.GetString prints out deprecation warnings, which flooded our logs.
+//So copied the function from https://github.com/ory/x/blob/v0.0.151/viperx/helper.go#L82-L100
+//and removed the deprecation logging.
+func getString(l *logrusx.Logger, key string, fallback string, deprecated ...string) string {
+	v := viper.GetString(key)
+	for _, dk := range deprecated {
+		if len(v) > 0 {
+			break
+		}
+		if vv := viper.GetString(dk); len(vv) > 0 {
+			v = vv
+		}
 	}
-	return issuerURL
+	if len(v) == 0 {
+		return fallback
+	}
+	return v
 }
 
 func (v *ViperProvider) OAuth2AuthURL() string {
