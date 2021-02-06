@@ -25,6 +25,8 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -53,6 +55,8 @@ import (
 )
 
 var _ = &consent.Handler{}
+
+var statsdMWSampleRate float32 = 1.0
 
 func EnhanceMiddleware(d driver.Driver, n *negroni.Negroni, address string, router *httprouter.Router, enableCORS bool, iface string) http.Handler {
 	if !x.AddressIsUnixSocket(address) {
@@ -203,6 +207,7 @@ func setup(d driver.Driver, cmd *cobra.Command) (admin *x.RouterAdmin, public *x
 	if d.Configuration().AdminDisableHealthAccessLog() {
 		adminLogger = adminLogger.ExcludePaths(healthx.AliveCheckPath, healthx.ReadyCheckPath, "/health")
 	}
+	initStatsdMWSampleRate(d)
 
 	adminmw.Use(adminLogger)
 	adminmw.Use(negroni.HandlerFunc(StatsdMiddleware))
@@ -344,11 +349,29 @@ func serve(d driver.Driver, cmd *cobra.Command, wg *sync.WaitGroup, handler http
 	}
 }
 
+func initStatsdMWSampleRate(d driver.Driver) {
+	var rate64 float64
+	var err error
+	sampleRate := os.Getenv("STATSD_MIDDLEWARE_SAMPLE_RATE")
+	if sampleRate == "" {
+		return
+	}
+	if rate64, err = strconv.ParseFloat(sampleRate, 32); err != nil {
+		d.Registry().Logger().Warn("Unable to parse STATSD_MIDDLEWARE_SAMPLE_RATE. Will use default value.")
+		rate64 = 1.0
+	} else if rate64 <= 0 || rate64 > 1 {
+		d.Registry().Logger().Warn("STATSD_MIDDLEWARE_SAMPLE_RATE must be > 0 and <= 1")
+		rate64 = 1.0
+	}
+	statsdMWSampleRate = float32(rate64)
+	d.Registry().Logger().Infof("Statsd middleware sample rate set to %f", statsdMWSampleRate)
+}
+
 func StatsdMiddleware(rw http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
 	var timing *metrics.StatsdTiming
 
-	tags := map[string]string{"path": r.URL.Path}
-	timing = metrics.NewTiming("requests", tags)
+	tags := map[string]string{"path": r.URL.Path, "method": r.Method}
+	timing = metrics.WithSampleRate(statsdMWSampleRate).NewTiming("requests", tags)
 
 	next(rw, r)
 
