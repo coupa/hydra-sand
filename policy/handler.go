@@ -4,11 +4,10 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"strconv"
-
 	"github.com/julienschmidt/httprouter"
 	"github.com/ory/hydra/x"
 	"github.com/ory/ladon"
+	"github.com/ory/x/pagination"
 	"github.com/pborman/uuid"
 	"github.com/pkg/errors"
 )
@@ -67,11 +66,26 @@ func (h *Handler) SetRoutes(admin *x.RouterAdmin) {
 //       403: genericError
 //       500: genericError
 func (h *Handler) List(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	query := r.URL.Query().Get("query")
 	subject := r.URL.Query().Get("subject")
 	resource := r.URL.Query().Get("resource")
+	if query != "" {
+		if subject != "" || resource != "" {
+			h.r.Writer().WriteErrorCode(w, r, http.StatusBadRequest, errors.New("cannot have both 'query' and 'subject' or 'resource' parameters. Only one of them can be supplied"))
+			return
+		}
+		//Ladon protects against SQL injection
+		policies, err := h.r.PolicyManager().Search(query)
+		if err != nil {
+			h.r.Writer().WriteError(w, r, errors.WithStack(err))
+			return
+		}
+		h.r.Writer().Write(w, r, policies)
+		return
+	}
 
 	if subject != "" && resource != "" {
-		h.r.Writer().WriteErrorCode(w, r, http.StatusBadRequest, errors.New("cannot query with both subject and resource. Only one of them can be supplied"))
+		h.r.Writer().WriteErrorCode(w, r, http.StatusBadRequest, errors.New("cannot have both 'subject' and 'resource' parameters. Only one of them can be supplied"))
 		return
 	}
 
@@ -85,29 +99,16 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 		return
 	}
 
-	val := r.URL.Query().Get("offset")
-	if val == "" {
-		val = "0"
-	}
+	limit, offset := pagination.Parse(r, 100, 0, 500)
 
-	offset, err := strconv.ParseInt(val, 10, 64)
+	n, err := h.r.PolicyManager().Count()
 	if err != nil {
-		h.r.Writer().WriteError(w, r, errors.WithStack(err))
+		h.r.Writer().WriteError(w, r, err)
 		return
 	}
+	pagination.Header(w, r.URL, n, limit, offset)
 
-	val = r.URL.Query().Get("limit")
-	if val == "" {
-		val = "500"
-	}
-
-	limit, err := strconv.ParseInt(val, 10, 64)
-	if err != nil {
-		h.r.Writer().WriteError(w, r, errors.WithStack(err))
-		return
-	}
-
-	policies, err = h.r.PolicyManager().GetAll(limit, offset)
+	policies, err = h.r.PolicyManager().GetAll(int64(limit), int64(offset))
 	if err != nil {
 		h.r.Writer().WriteError(w, r, errors.WithStack(err))
 		return

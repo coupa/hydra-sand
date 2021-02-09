@@ -143,10 +143,8 @@ github.com/coupa/fosite v0.34.1-1 h1:0j95mfvgWpFtM/M8aYwQ4OlWovsmTtRbgQufcgmowGA
 github.com/coupa/fosite v0.34.1-1/go.mod h1:ikVSbOhfSLX0sdz/RmtiOMi4xELJ6iconOb2R/Wrobc=
 github.com/coupa/foundation-go v1.2.2 h1:SU3U+TK68cl2gTXq1R4199doHRgfSTa9d+nafk8tRgE=
 github.com/coupa/foundation-go v1.2.2/go.mod h1:NwvE1/E1lLLDh/yImBcS3Vdobpw/ForlbVQ7txUquPg=
-github.com/coupa/ladon v0.8.10 h1:epelQStrvVxwdCBK7IcXUiJcP6tJ1NXkrNbhVU1ujUQ=
-github.com/coupa/ladon v0.8.10/go.mod h1:r01D3tdHHx2q65DIpzma9KuTPcaSCv9PNUy6JcCvBhA=
-github.com/coupa/ladon v0.8.11 h1:mhOIsc3y+xz6oGUh72aCLvHTAHS9Av1t0xM8zG5oUmc=
-github.com/coupa/ladon v0.8.11/go.mod h1:r01D3tdHHx2q65DIpzma9KuTPcaSCv9PNUy6JcCvBhA=
+github.com/coupa/ladon v0.8.12 h1:o3SEpThOmHAtXgEpidoRki0mz6BOVzXzof6JPkimTus=
+github.com/coupa/ladon v0.8.12/go.mod h1:r01D3tdHHx2q65DIpzma9KuTPcaSCv9PNUy6JcCvBhA=
 github.com/cpuguy83/go-md2man v1.0.10 h1:BSKMNlYxDvnunlTymqtgONjNnaRV1sTpcovwwjF22jk=
 github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwcJI5acqYI6dE=
 github.com/cpuguy83/go-md2man/v2 v2.0.0 h1:EoUDS0afbrsXAZ9YQ9jdu/mZ2sXgT1/2yyNng4PGlyM=
