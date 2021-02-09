@@ -20,4 +20,7 @@ type Manager interface {
 
 	// Update a policy.
 	Update(policy ladon.Policy) error
+
+	// Search for policies by id
+	Search(query string) (ladon.Policies, error)
 }

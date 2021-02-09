@@ -179,6 +179,17 @@ func (m *SQLManager) GetClients(ctx context.Context, limit, offset int) (clients
 	return clients, nil
 }
 
+func (m *SQLManager) SearchClients(ctx context.Context, search string) (clients []Client, err error) {
+	clients = []Client{}
+	// Escape the special characters for the LIKE query
+	search = strings.ReplaceAll(search, "_", "\\_")
+	search = strings.ReplaceAll(search, "%", "\\%")
+	if err := m.DB.SelectContext(ctx, &clients, m.DB.Rebind("SELECT * FROM hydra_client WHERE id LIKE ? ORDER BY id"), "%"+search+"%"); err != nil {
+		return nil, sqlcon.HandleError(err)
+	}
+	return clients, nil
+}
+
 func (m *SQLManager) CountClients(ctx context.Context) (int, error) {
 	var n int
 	if err := m.DB.QueryRow("SELECT count(*) FROM hydra_client").Scan(&n); err != nil {
