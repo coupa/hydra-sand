@@ -69,13 +69,16 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 	query := r.URL.Query().Get("query")
 	subject := r.URL.Query().Get("subject")
 	resource := r.URL.Query().Get("resource")
+
+	limit, offset := pagination.Parse(r, 100, 0, 500)
+
 	if query != "" {
 		if subject != "" || resource != "" {
 			h.r.Writer().WriteErrorCode(w, r, http.StatusBadRequest, errors.New("cannot have both 'query' and 'subject' or 'resource' parameters. Only one of them can be supplied"))
 			return
 		}
 		//Ladon protects against SQL injection
-		policies, err := h.r.PolicyManager().Search(query)
+		policies, err := h.r.PolicyManager().Search(query, int64(limit), int64(offset))
 		if err != nil {
 			h.r.Writer().WriteError(w, r, errors.WithStack(err))
 			return
@@ -98,8 +101,6 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request, _ httprouter.Para
 		h.r.Writer().Write(w, r, policies)
 		return
 	}
-
-	limit, offset := pagination.Parse(r, 100, 0, 500)
 
 	n, err := h.r.PolicyManager().Count()
 	if err != nil {
