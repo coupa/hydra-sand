@@ -144,11 +144,8 @@ func (m *MemoryManager) GetClients(ctx context.Context, limit, offset int) (clie
 	return append(clients, m.Clients[start:end]...), nil
 }
 
-func (m *MemoryManager) SearchClients(ctx context.Context, search string) (clients []Client, err error) {
-	m.RLock()
-	defer m.RUnlock()
-
-	return append(clients, m.Clients...), nil
+func (m *MemoryManager) SearchClients(ctx context.Context, search string, limit, offset int) (clients []Client, err error) {
+	return m.GetClients(ctx, limit, offset)
 }
 
 func (m *MemoryManager) CountClients(ctx context.Context) (n int, err error) {

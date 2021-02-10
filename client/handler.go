@@ -187,10 +187,12 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request, ps httprouter.P
 //       200: oAuth2ClientList
 //       500: genericError
 func (h *Handler) List(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	limit, offset := pagination.Parse(r, 100, 0, 500)
+
 	query := r.URL.Query().Get("query")
 	if query != "" {
 		//SearchClients does protect against SQL injection.
-		c, err := h.r.ClientManager().SearchClients(r.Context(), query)
+		c, err := h.r.ClientManager().SearchClients(r.Context(), query, limit, offset)
 		if err != nil {
 			h.r.Writer().WriteError(w, r, err)
 			return
@@ -201,8 +203,6 @@ func (h *Handler) List(w http.ResponseWriter, r *http.Request, ps httprouter.Par
 		h.r.Writer().Write(w, r, c)
 		return
 	}
-
-	limit, offset := pagination.Parse(r, 100, 0, 500)
 
 	c, err := h.r.ClientManager().GetClients(r.Context(), limit, offset)
 	if err != nil {

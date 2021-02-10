@@ -45,7 +45,7 @@ type Storage interface {
 
 	GetClients(ctx context.Context, limit, offset int) ([]Client, error)
 
-	SearchClients(ctx context.Context, search string) ([]Client, error)
+	SearchClients(ctx context.Context, search string, limit, offset int) ([]Client, error)
 
 	CountClients(ctx context.Context) (int, error)
 
