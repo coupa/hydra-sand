@@ -179,7 +179,9 @@ func (w *LocalWarden) newContext(auth fosite.AccessRequester) *firewall.Context 
 		Audience:      auth.GetClient().GetID(),
 		IssuedAt:      auth.GetRequestedAt(),
 		ExpiresAt:     exp,
-		Extra:         session.Extra,
+		//Set Extra to nil until sand-java clients are fixed
+		//We don't use this btw.
+		Extra: nil, // session.Extra,
 	}
 
 	return c
