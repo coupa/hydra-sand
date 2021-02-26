@@ -156,7 +156,15 @@ func (m *SQLManager) CreateClient(ctx context.Context, c *Client) error {
 		),
 		setDefaults(c),
 	); err != nil {
-		return sqlcon.HandleError(err)
+		handlerErr := sqlcon.HandleError(err)
+		cause := errors.Cause(handlerErr)
+		if cause == sqlcon.ErrUniqueViolation {
+			// Make a copy of ErrUniqueViolation
+			uniqueViolation := *sqlcon.ErrUniqueViolation
+			uniqueViolation.ErrorField += "; Error 1062: Duplicate entry"
+			return errors.Wrap(&uniqueViolation, err.Error())
+		}
+		return handlerErr
 	}
 
 	return nil
