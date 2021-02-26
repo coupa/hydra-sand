@@ -1,6 +1,6 @@
 FROM golang:1.15-alpine
 
-RUN apk add git bash build-base && \
+RUN apk add py3-setuptools git bash build-base && \
     go get -u github.com/gobuffalo/packr/v2/packr2
 
 COPY . /go/src/github.com/ory/hydra

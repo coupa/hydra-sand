@@ -2,7 +2,7 @@ ARG BUILDER_IMAGE
 
 FROM ${BUILDER_IMAGE}
 
-RUN sudo apk add git bash build-base && \
+RUN sudo apk add py3-setuptools git bash build-base && \
     go get -u github.com/gobuffalo/packr/v2/packr2
 
 COPY --chown=app . /go/src/github.com/ory/hydra
